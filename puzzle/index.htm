@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html xmlns:puzzler>
+<head>
+<title>Jojo's Puzzle</title>
+<meta name="author" content="Pat Hall">
+<link rel="stylesheet" href="../style01.css" type="text/css">
+
+<style>
+@media screen { 
+  puzzler\:img { behavior:url(puzz.htc); background:#FFFFFF; }
+}
+</style>
+
+<script>
+function StartGame() {
+	if (!navigator.appVersion.lastIndexOf('MSIE 5') != -1) {
+		PuzzDiv.innerHTML='<puzzler:img down=4 across=4><img src="squiggy.jpg" width=250 height=262 border=0></puzzler:img>';
+	}
+}
+</script>
+</head>
+
+<body background="../images/backstripe.gif" bgcolor="#0000C0" text="#FFFFFF" link="#FFFF00" vlink="#FFFF00" alink="#FFFF00" OnLoad="StartGame()">
+<center>
+
+<!-- start of menu -->
+<a href="../history.htm" target="_parent"><img src="../images/history.gif" width=60 height=100 border=0></a>
+<a href="../games.htm" target="_parent"><img src="../images/games.gif" width=60 height=100 border=0></a>
+<a href="../checklist.htm" target="_parent"><img src="../images/checklist.gif" width=60 height=100 border=0></a>
+<a href="../coming.htm" target="_parent"><img src="../images/coming.gif" width=60 height=100 border=0></a>
+<a href="../askjojo.htm" target="_parent"><img src="../images/askjojo.gif" width=60 height=100 border=0></a>
+<!-- end of menu -->
+
+<script>
+	if (!navigator.appVersion.lastIndexOf('MSIE 5') != -1) {
+		document.write( '<p>Left-click on a piece to move it.<br>Right-click on the puzzle to solve it.<p><table cellpadding=0 cellspacing=0 width=270 height=282 bgcolor="#FFFF00"><tr valign="middle"><td align="center"><div id=\'PuzzDiv\'><font color="#000000">Loading Image.<br>Please Wait...<img src="squiggy.jpg" width=0 height=0 border=0></font><div></td></tr></table>' );
+	} else {
+		document.write( '<p><font size=+2>Sorry, you need Microsoft\'s<br> Internet Explorer 5 to play...</font>' );
+	}
+</script>
+
+<p>
+<a href="../games.htm" target="_parent"><img src="../images/back.gif" width=60 height=29 border=0></a>
+</center>
+</body>
+</html>

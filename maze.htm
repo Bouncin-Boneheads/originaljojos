@@ -1,0 +1,281 @@
+<HTML>
+<HEAD>
+	<TITLE>Mysterious Maze</TITLE>
+</HEAD>
+<STYLE TYPE="TEXT/CSS">
+<!--
+BODY {font: 10pt Arial}
+#TMaze {font: 12pt Arial;font-weight: bold;}
+.copy {font: 8pt Arial}
+-->
+</STYLE>
+<SCRIPT>
+BOTTOMWALL = 0
+RIGHTWALL = 1
+VISITED = 2
+
+var Maze=new Array();
+var mRows=21;
+var mCols=26;
+visitedCells=0;
+totalCells=0;
+Score=0;
+var UserRow=0;
+var UserCol=0;
+var GameOver=true;
+
+Smarts=new Array(
+"Huh! Don't think you're too smart.",
+"I'm gonna give you a real toughie now.",
+"That was good. You some kind of genius, or something?",
+"Wow, I'm impressed!",
+"Hey, gimme a break! Lose a game or two!",
+"Well, seems like both of us got nothing better to do.",
+"You could go get a life, or ",
+"That was just a test. Now for the real thing."
+)
+
+//*****************************************
+//****** Navigate - Go through Maze
+//*****************************************/
+
+
+function Navigate(){
+if(GameOver){return;}	
+
+switch(event.keyCode){
+	case 37: //Left
+	  if(UserCol>0){
+		if(Maze[UserRow][UserCol-1][RIGHTWALL]==0)
+			{UserCol--;ChangeCell('L');}
+	  	}
+        event.cancelBubble=true;break;
+	case 38://Up
+	  if(UserRow>0){
+		if(Maze[UserRow-1][UserCol][BOTTOMWALL]==0)
+			{UserRow--;ChangeCell('U');}
+	  	}
+
+        event.cancelBubble=true;break;
+	case 39://Right
+	  if(UserCol<mCols-1){
+		if(Maze[UserRow][UserCol][RIGHTWALL]==0)
+			{UserCol++;ChangeCell('R');}
+	  	}
+
+	  event.cancelBubble=true;break; 
+	case 40://Down
+	  if(UserRow<mRows-1){
+		if(Maze[UserRow][UserCol][BOTTOMWALL]==0)
+			{UserRow++;ChangeCell('D');}
+	  	}
+
+	  event.cancelBubble=true;break;
+	}
+
+}
+
+function ChangeCell(fromDir){
+if(TMaze.rows[UserRow].cells[UserCol].style.backgroundColor=='')
+  {TMaze.rows[UserRow].cells[UserCol].style.backgroundColor='#00FF00'}
+else{
+
+	switch(fromDir){
+	case 'L':
+	TMaze.rows[UserRow].cells[UserCol+1].style.backgroundColor='';break;
+	case 'R':
+	TMaze.rows[UserRow].cells[UserCol-1].style.backgroundColor='';break;
+	case 'U':
+	TMaze.rows[UserRow+1].cells[UserCol].style.backgroundColor='';break;
+	case 'D':
+	TMaze.rows[UserRow-1].cells[UserCol].style.backgroundColor='';break;
+	}
+	Score--;
+	ScoreDiv.innerHTML='<b>Score: '+Score+'</b>';
+}
+if((UserRow==mRows-1)&&(UserCol==mCols-1)){
+	Score+=5;
+	ScoreDiv.innerHTML='<b>Score: '+Score+'</b>';
+	RandNo=(Math.random()*100)%(Smarts.length-1);
+	RandNo=Math.round(RandNo)
+	SmartStr=Smarts[RandNo];
+	alert(SmartStr+' Click on OK to continue');
+	MazeDiv.innerHTML='<font size=+2 color=#00FF00>Generating Maze. Please Wait...</font>';
+	setTimeout("Loader()",10);
+	}	
+}
+
+//*****************************************
+//****** MakeMaze - Define Maze Structure
+//*****************************************/
+
+function MakeMaze(){
+
+//Set up the hedge array - initially all walls intact
+for(i=0;i<mRows;i++){
+   	Maze[i]=new Array();
+	for(j=0;j<mCols;j++){
+		Maze[i][j]=new Array();
+		Maze[i][j][BOTTOMWALL]=1;
+		Maze[i][j][RIGHTWALL]=1;
+		Maze[i][j][VISITED]=false;
+		}
+	}
+
+
+
+//Choose a random starting point
+currCol=(Math.random()*100)%(mCols-1);
+currCol=Math.round(currCol);
+currRow=(Math.random()*100)%(mRows-1);
+currRow=Math.round(currRow);
+
+//Recursively Remove Walls - Depth First Algorithm
+visitedCells=0;
+totalCells=mRows*mCols;
+MakePath(currRow,currCol);
+
+}//***END MakeMaze
+
+//*****************************************
+//****** MakePath - Recursive Maze Generation
+//*****************************************/
+
+function MakePath(R,C,D){
+
+//Knock out wall bxn this and previous cell
+visitedCells++;
+Maze[R][C][VISITED]=true;
+if(D=="N"){Maze[R][C][BOTTOMWALL]=0;}
+else
+if(D=="S"){Maze[R-1][C][BOTTOMWALL]=0;}
+else
+if(D=="E"){Maze[R][C-1][RIGHTWALL]=0;}
+else
+if(D=="W"){Maze[R][C][RIGHTWALL]=0;}
+	
+//build legal directions array
+var directions=new Array();
+if(R>0){directions[directions.length]="N"}
+if(R<mRows-1){directions[directions.length]="S"}
+if(C>0){directions[directions.length]="W"}
+if(C<mCols-1){directions[directions.length]="E"}
+
+//Shuffle the directions array randomly
+var DirLen=directions.length;
+
+for(i=0;i<DirLen;i++){
+  j=(Math.random()*100)%(DirLen-1);
+  j=(Math.round(j));
+  temp=directions[i];
+  directions[i]=directions[j];
+  directions[j]=temp;
+  }
+
+var d=0;
+
+//Call the function recursively
+for(d=0;d<directions.length;d++){
+	if(directions[d]=="N"){if(Maze[R-1][C][VISITED]==false){MakePath(R-1,C,"N")}}
+	else
+	if(directions[d]=="S"){if(Maze[R+1][C][VISITED]==false){MakePath(R+1,C,"S")}}
+	else
+	if(directions[d]=="E"){if(Maze[R][C+1][VISITED]==false){MakePath(R,C+1,"E")}}
+	else
+	if(directions[d]=="W"){if(Maze[R][C-1][VISITED]==false){MakePath(R,C-1,"W")}}
+	else {alert('bug:you should never reach here')}
+
+	}
+
+}//***END MakePath
+
+
+//*****************************************
+//****** DrawMaze - Draw Maze Table
+//*****************************************/
+
+function DrawMaze(){
+HTMLStr = '<table ID="TMaze" cellpadding=0 cellspacing=0 bgcolor="#FFC000">';
+for(i=0;i<mRows;i++){
+      HTMLStr+='<TR>';
+      for(j=0;j<mCols;j++){
+		HTMLStr+='<TD ALIGN="CENTER" WIDTH=20 style="';
+		if(i==0){HTMLStr+='BORDER-TOP: 2px black solid;'}
+		if(i==mRows-1){HTMLStr+='BORDER-BOTTOM: 2px black solid;'}
+		if(j==0){HTMLStr+='BORDER-LEFT: 2px black solid;'}
+		if(j==mCols-1){HTMLStr+='BORDER-RIGHT: 2px black solid;'}
+		if(Maze[i][j][BOTTOMWALL]==1){HTMLStr+='BORDER-BOTTOM: 2px black solid;'}
+       	if(Maze[i][j][RIGHTWALL]==1){HTMLStr+='BORDER-RIGHT: 2px black solid;'}
+
+		HTMLStr+='">';
+            if((i==0)&&(j==0)){HTMLStr+='<font color=black>S</font>';}
+		else
+		if((i==mRows-1)&&(j==mCols-1)){HTMLStr+='<font color=black>F</font>';}
+		else {HTMLStr+='&nbsp;'}
+		HTMLStr+='</TD>';
+		} 
+	HTMLStr+='</TR>';
+	//alert(HTMLStr);
+	}
+HTMLStr+='</TABLE>';
+
+MazeDiv.innerHTML=HTMLStr;
+
+}//***END DrawMaze*/
+
+
+function StartGame(){
+	mRows=17;
+	mCols=26;
+	Score=0;
+	ScoreDiv.innerHTML='<b>Score: 0</b>';
+	MazeDiv.innerHTML='<font size=+2 color=#00FF00>Generating Maze. Please Wait...</font>';
+	setTimeout("Loader()",10);
+
+}
+
+function Loader(){
+	MakeMaze();
+	DrawMaze();
+	//StatDiv.innerHTML='READY';
+	TMaze.rows[0].cells[0].style.backgroundColor='#00FF00';
+	UserRow=0;
+	UserCol=0;
+	GameOver=false;
+}
+
+//-->
+</SCRIPT>
+
+<body background="./images/backstripe.gif" bgcolor="#0000FF" text="#FFFFFF" OnLoad="StartGame()" OnKeyDown="Navigate()">
+<table align="center" cellpadding=0 cellspacing=0>
+ <tr><td align="center"><b>Use the arrow keys to help Jojo find his friend.</b></td></tr>
+ <tr>
+  <td>
+   <table cellpadding=0 cellspacing=0>
+    <tr>
+     <td align="center" valign="top" width=40><img src="./invaders/invader1b.gif" width=38 height=32 border=0></td>
+ 	   <td><div id="MazeDiv"></div></td>
+     <td align="center" valign="bottom" width=40><img src="./invaders/invader2a.gif" width=38 height=32 border=0></td>
+    </tr>
+   </table>
+  </td>
+ </tr>
+ <tr>
+  <td>     
+   <table cellpadding=0 cellspacing=0 width=100%>
+    <tr>
+     <td width=40></td>
+     <td align="left" valign="top" width=75><a href="games.htm" target="_parent"><img src="./images/back.gif" width=60 height=29 border=0></a></td>
+     <td align="center" valign="middle"><div id='ScoreDiv'><b>Score: 0</b><div></td>
+     <td align="right" valign="top" width=75><img src="./images/new.gif" width=60 height=29 border=0 ONCLICK="StartGame()" style="cursor: hand;"></td>
+     <td width=40></td>
+    </tr>
+   </table>
+  </td>
+ </tr>
+</table>
+</div>
+
+</BODY>
+</HTML>
