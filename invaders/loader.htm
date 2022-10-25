@@ -1,0 +1,138 @@
+<HTML>
+<HEAD>
+</HEAD>
+
+<SCRIPT LANGUAGE="javascript">
+var loaded = true;
+
+function newgame_onmousedown() {
+    if(loaded) {
+        newgame.src="new_game_pressed.gif"
+    }
+}
+
+function newgame_onmouseup() {
+    newgame.src="new_game.gif"
+    if (loaded) {
+        document.location="invaders.htm"
+    } else {
+        newgame.src="images_loading.gif"
+        alert("Game images are still loading.  Please just hang on a few more moments until they're done.")
+    }
+}
+
+function newgame_onmouseout() {
+    if(loaded) {
+        newgame.src="new_game.gif"
+    } else {
+        newgame.src="images_loading.gif"
+    }
+}
+
+function init() {
+    document.all.barfg.style.visibility = "hidden"
+    document.all.barbg.style.visibility = "hidden"
+    document.all.bartext.style.visibility = "hidden"
+    document.all.newgame.style.visibility = "visible"
+    loaded=1
+}
+</SCRIPT>
+
+<BODY BGCOLOR="#000000" TEXT="#FFFFFF" LINK="#FFCCCC" VLINK="#FFCCCC" ALINK="#CCCCFF" onLoad="init()">
+<!--#exec cmd="/home/john/cgi-bin/log_referer.pl /home/john/public_html/logs/invaders_refererlog" -->
+<FONT FACE="Verdana,Arial,Helvetica" SIZE=-1>
+<CENTER>
+<IMG SRC="title.gif"><P>
+<TABLE WIDTH=400 CELLPADDING=5 CELLSPACING=0 BORDER=1 BGCOLOR="#660000" BORDERCOLOR="#FFFFFF"><TR><TD><CENTER>
+
+Invaders! is a shoot 'em up game where you have to blast all the
+invading Jojos.
+<P>
+
+<B>Use the &lt; and &gt; keys to move left and right and
+the space-bar to fire.</B><P>
+
+<P>
+
+<DIV ID="bar" STYLE="position: relative; height: 35; width=104; bgcolor=grey;">
+
+  <DIV ID="barbg" STYLE="position: absolute; top: 10px; left: 0px; height: 20; width: 104;">
+    <TABLE ID="barbgimg" BGCOLOR="#CC6060" STYLE="position: absolute; top: 0; left: 0;" WIDTH=104 HEIGHT=20>
+      <TR><TD></TD></TR>
+    </TABLE>
+  </DIV>
+
+  <DIV ID="barfg" STYLE="position: absolute; top: 10px; left: 0px; height: 20; width: 104;">
+    <TABLE ID="barimg" BGCOLOR="#FFFFCC" STYLE="position: absolute; top: 2; left: 2; filter: Alpha(Opacity=50);" WIDTH=0 HEIGHT=16>
+      <TR><TD></TD></TR>
+    </TABLE>
+  </DIV>
+
+  <DIV ID="bartext" STYLE="position: absolute; top: 10; left: 5; height: 20;">
+    <FONT COLOR="#000000">loading...</FONT>
+  </DIV>
+
+  <DIV ID="newgamediv" STYLE="position: absolute; top: 0px; left: 0px; height: 20; width: 104; visibility: visible;">
+    <IMG STYLE="cursor: hand; visibility: hidden;" ALT="Click here to begin a new game" SRC="new_game.gif" ID="newgame">
+  </DIV>
+
+</DIV>
+
+<P>
+
+	When there's a button above reading <B>NEW GAME</B> then you're ready to go.<P>
+
+</CENTER></TD></TR></TABLE><P>
+
+<SCRIPT LANGUAGE="javascript">
+isIE4 = (navigator.appVersion.indexOf('MSIE 4') != -1)
+
+function setbar(x) {
+  bar_img.width=(x/barmax)*barmax;
+}
+
+function next(x) {
+  if(isIE4) {
+    if(loads[x] != 1) {
+      curr++;
+      setbar((curr/maximgs)*99 + 1);
+    }
+
+    loads[x] = 1;
+  }
+}
+
+if(isIE4) {
+  barmax = 100;
+  curr = 0;
+  maximgs = 19;
+  bar_img = document.all.barimg;
+  loads = new Array;
+
+  setbar(1);
+}
+</SCRIPT>
+
+<IMG SRC="new_game_pressed.gif" HEIGHT=1 WIDTH=1 onLoad="javascript:next(1);">
+<IMG SRC="invader1a.gif" HEIGHT=1 WIDTH=1 onLoad="javascript:next(2);">
+<IMG SRC="invader1b.gif" HEIGHT=1 WIDTH=1 onLoad="javascript:next(3);">
+<IMG SRC="invader1c.gif" HEIGHT=1 WIDTH=1 onLoad="javascript:next(4);">
+<IMG SRC="invader2a.gif" HEIGHT=1 WIDTH=1 onLoad="javascript:next(5);">
+<IMG SRC="invader2b.gif" HEIGHT=1 WIDTH=1 onLoad="javascript:next(6);">
+<IMG SRC="ibullet.gif" HEIGHT=1 WIDTH=1 onLoad="javascript:next(7);">
+<IMG SRC="lives.gif" HEIGHT=1 WIDTH=1 onLoad="javascript:next(8);">
+<IMG SRC="lives_text.gif" HEIGHT=1 WIDTH=1 onLoad="javascript:next(9);">
+<IMG SRC="score.gif" HEIGHT=1 WIDTH=1 onLoad="javascript:next(10);">
+<IMG SRC="waves.gif" HEIGHT=1 WIDTH=1 onLoad="javascript:next(11);">
+<IMG SRC="saucer.gif" HEIGHT=1 WIDTH=1 onLoad="javascript:next(12);">
+<IMG SRC="saucerdying.gif" HEIGHT=1 WIDTH=1 onLoad="javascript:next(13);">
+<IMG SRC="gunner.gif" HEIGHT=1 WIDTH=1 onLoad="javascript:next(14);">
+<IMG SRC="gunnerdead.gif" HEIGHT=1 WIDTH=1 onLoad="javascript:next(15);">
+<IMG SRC="bullet.gif" HEIGHT=1 WIDTH=1 onLoad="javascript:next(16);">
+<IMG SRC="winner.gif" HEIGHT=1 WIDTH=1 onLoad="javascript:next(17);">
+<IMG SRC="loser.gif" HEIGHT=1 WIDTH=1 onLoad="javascript:next(18);">
+<IMG SRC="bg.gif" HEIGHT=1 WIDTH=1 onLoad="javascript:next(19);">
+</CENTER>
+</FONT>
+</BODY>
+</HTML>

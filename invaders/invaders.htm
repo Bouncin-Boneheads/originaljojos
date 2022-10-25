@@ -1,0 +1,695 @@
+<HTML>
+<HEAD>
+<TITLE>Invaders</TITLE>
+<!-- Scripting credit to John Arnold <john@otn.co.uk> <http://www.otn.co.uk/> -->
+
+<style type="text/css">
+  body { 
+   background: #000000 url(bg.gif);
+   background-repeat: repeat-x;
+  }
+</style>
+
+<SCRIPT LANGUAGE="JavaScript">
+// if (parent.location.href == self.location.href || !parent.gframe) window.location.href = 'index.htm';
+basic_invader_moveLeft_chunk = 5
+basic_invader_moveTop_chunk = 4
+basic_invader_move_timeout = 750
+basic_invader_move_timeout_min = 300
+basic_max_firecount = 30
+basic_lives = 3
+saucerscore = 500
+invaderscore = 50
+wavescore = 1000
+
+num_invaders = 16
+invader_startTop = 50
+invader_startLeft = 20
+invader_sizeLeft = 35
+invader_sizeTop = 30
+gunner_startTop = 310
+gunner_startLeft = 200
+invader_moveLeft_chunk = 6
+invader_moveTop_chunk = 6
+invader_move_speedup_chunk = 1
+invader_moveLeft_max = 450
+invader_moveLeft_min = 20
+invader_moveTop_max = 290
+invader_move_timeout = 600
+invader_move_timeout_min = 50
+invader_move_timeout_chunk = (invader_move_timeout - invader_move_timeout_min) / num_invaders
+invader_die_timeout = 300
+invader_row_spacing = 50
+invader_col_spacing = 50
+invader_cols = 5
+gunner_move_chunk = 15
+gunner_move_min = 10
+gunner_move_max = 440
+gunner_size = 50
+gunner_die_timeout = 1500
+bullet_inFlight = 0
+bullet_move_timeout = 30
+bullet_move_chunk = 20
+bullet_move_min = 10
+bullet_start_plusLeft = 24
+bullet_start_plusTop = -10
+ibullets_move_timeout = 70
+ibullets_move_chunk = 15
+ibullets_move_max = 300
+ibullets_kill_below = 280
+winner_centreTop = 100
+winner_centreLeft = 120
+newgame_top = 270
+newgame_left = 230
+saucer_move_chunk = 10
+saucer_move_timeout = 300
+saucer_move_max = 520
+saucer_appear_timeout = 30000
+saucer_size = 80
+saucer_kill_zone = 40
+lives_images_top = 333
+lives_images_left = 20
+lives_text_left = 15
+lives = 3
+graphicpos = 1
+firecount = 0
+max_firecount = 30
+gameover = 0 
+wins = 0
+score = 0
+saucerdying=0
+saucerevent=0
+
+function gunner_start() {
+    gunner.style.pixelTop=gunner_startTop
+    gunner.style.pixelLeft=gunner_startLeft
+    bullet.style.pixelTop = -1000
+}
+
+function invader_startMove() {
+    col = 0
+    row = 0
+
+    for (var i in invaders) {
+        invaders[i].style.pixelTop = invader_startTop + (row * invader_row_spacing)
+        invaders[i].style.pixelLeft = invader_startLeft + (col * invader_col_spacing)
+	col++
+	if(col > invader_cols) {
+	    col = 0
+	    row++
+	}
+    }
+    window.setTimeout("invader_move()", 1000)
+}
+
+function vis_new_game_but() {
+    newgame.style.pixelTop = newgame_top
+    newgame.style.pixelLeft = newgame_left
+}
+
+function invis_new_game_but() {
+    newgame.style.pixelTop = -1000
+    newgame.style.pixelLeft = newgame_left
+}
+
+function graphicswap() {
+    if(graphicpos == 1) {
+        graphicpos = 0
+    } else {
+        graphicpos = 1
+    }
+    for (var i in invaders) {
+        if(invadertype[i] != 0) {
+	    invaders[i].src = invadergraphic[invadertype[i]][graphicpos]
+	}
+    }
+}
+
+function invaders_movedown() {
+    for (var i in invaders) {
+        if(invadertype[i] != 0) {
+	    invaders[i].style.pixelTop += invader_moveTop_chunk
+	}
+   }
+}
+
+function invaders_movealong() {
+    for (var i in invaders) {
+        if(invadertype[i] != 0) {
+    	    invaders[i].style.pixelLeft += invader_moveLeft_chunk
+	}
+   }
+}
+
+function invader_move() {
+    bottom = 0
+    direction = 0
+    anyleft = 0
+    canfire = 0
+
+    if(gameover == 1) { return }
+
+    if(num_ibullets_inFlight < num_ibullets) {
+        canfire = 1
+    }
+
+    for (var i in invaders) {
+        if(invadertype[i] != 0) {
+	    anyleft++
+	    firecount++
+
+	    if(canfire == 1) {
+		if(firecount == max_firecount) {
+		    firecount = 0
+		    invaderfire(i)
+		}
+	    }
+
+    	    if(direction != 1) {
+	        if(invader_moveLeft_chunk > 0) {
+	            if(invaders[i].style.pixelLeft > invader_moveLeft_max) {
+                        invader_moveLeft_chunk = 0 - invader_moveLeft_chunk
+		        direction = 1
+		    }
+	        } else {
+	            if(invaders[i].style.pixelLeft < invader_moveLeft_min) {
+                        invader_moveLeft_chunk = 0 - invader_moveLeft_chunk
+		        direction = 1
+	            }
+	        }
+	        if(invaders[i].style.pixelTop > bottom) bottom = invaders[i].style.pixelTop
+            }
+        }
+    }
+
+    if(anyleft == 0) {
+        gameend(1)
+    } else {
+        if (direction == 1) {    
+            invaders_movedown()
+        } else {
+            invaders_movealong()
+        }
+
+        graphicswap()
+
+        if(bottom < invader_moveTop_max) {
+            window.setTimeout("invader_move()", invader_move_timeout)
+        } else {
+	    gameend(0)
+	}
+    }
+}
+
+function gameend(i) {
+    if(i == 1) {
+        winner.style.pixelTop = -200
+        winner.style.pixelLeft = winner_centreLeft
+	winner_swoopin()
+	gameover = 1
+	wins++
+	frm.waves.value = wins
+	score += wavescore
+	frm.score.value = score
+    } else {
+        loser.style.pixelLeft = winner_centreLeft
+        loser.style.pixelTop = -200
+	loser_swoop()
+	gameover = 1
+	wins = 0
+    }
+}
+
+function loser_swoop() {
+    loser.style.pixelTop += 10
+    if(loser.style.pixelTop < winner_centreTop) {
+        window.setTimeout("loser_swoop()", 20)
+    } else {
+        vis_new_game_but()
+    }
+}
+
+function winner_swoopin() {
+    winner.style.pixelTop += 10
+    if(winner.style.pixelTop < winner_centreTop) {
+        window.setTimeout("winner_swoopin()", 20)
+    } else {
+        setup_next_level()
+	window.setTimeout("winner_swoopout()", 500)
+    }
+}
+
+function winner_swoopout() {
+    winner.style.pixelTop -= 10
+    if(winner.style.pixelTop > -200) {
+        window.setTimeout("winner_swoopout()", 20)
+    } else {
+        winner.style.pixelTop = -1000
+    }
+}
+
+function setup_new_game() {
+    gameover = 0
+    saucerdying = 0
+    invis_new_game_but()
+
+    winner.style.pixelTop = -1000
+    loser.style.pixelTop = -1000
+    lives = basic_lives
+    wins = 0
+    score = 0
+    frm.waves.value = wins
+    frm.score.value = score
+    invader_moveLeft_chunk = basic_invader_moveLeft_chunk
+    invader_moveTop_chunk = basic_invader_moveTop_chunk
+    invader_move_timeout = basic_invader_move_timeout
+    invader_move_timeout_min = basic_invader_move_timeout_min
+    max_firecount = basic_max_firecount
+    firecount = 0
+
+    lives_text.style.pixelTop = lives_images_top
+    lives_text.style.pixelLeft = lives_text_left
+    for (var i in lives_images) {
+        lives_images[i].style.pixelTop = lives_images_top
+        lives_images[i].style.pixelLeft = lives_images_left + ((lives_images[i].width + 7) * i)
+    }
+
+    for (var i in ibullets) {
+        ibullets[i].style.pixelTop = -1000
+	ibullets_used[i] = 0
+    }
+    num_ibullets_inFlight = 0
+
+    invaders_setup()
+    for (var i in invaders) {
+        invaders[i].src = invadergraphic[invadertype[i]][graphicpos]
+    }
+
+    saucer.style.pixelLeft = -100
+
+    if(saucerevent == 0) {
+        saucerevent = 1;
+        window.setTimeout("movesaucer()", saucer_appear_timeout)
+    }
+    gunner_start()
+    invader_startMove()
+    move_ibullets()
+}
+
+function setup_next_level() { 
+    gameover = 0
+    saucerdying = 0
+
+    loser.style.pixelTop = -1000
+
+    invader_moveLeft_chunk = basic_invader_moveLeft_chunk + wins
+    invader_moveTop_chunk = basic_invader_moveTop_chunk + wins
+    invader_move_timeout = basic_invader_move_timeout - (wins * 25)
+    if(invader_move_timeout < 40) { invader_move_timeout = 40}
+    invader_move_timeout_min = basic_invader_move_timeout_min - (wins * 50)
+    if(invader_move_timeout_min < 10) { invader_move_timeout_min = 10}
+    max_firecount = basic_max_firecount - (wins * 3)
+    if(max_firecount < 1) { max_firecount = 1}
+
+    firecount = 0
+
+    for (var i in ibullets) {
+        ibullets[i].style.pixelTop = -1000
+	ibullets_used[i] = 0
+    }
+    num_ibullets_inFlight = 0
+
+    invaders_setup()
+    for (var i in invaders) {
+        invaders[i].src = invadergraphic[invadertype[i]][graphicpos]
+    }
+
+    saucer.style.pixelLeft = -100
+
+    if(saucerevent == 0) {
+        saucerevent = 1;
+        window.setTimeout("movesaucer()", saucer_appear_timeout)
+    }
+    gunner_start()
+    invader_startMove()
+    move_ibullets()
+}
+
+function invaderfire(i) {
+    found = 0
+
+    for (var j in ibullets) {
+        if((found == 0)&&(ibullets_used[j] == 0)) {
+            ibullets[j].style.pixelLeft = invaders[i].style.pixelLeft
+            ibullets[j].style.pixelTop = invaders[i].style.pixelTop
+	    ibullets_used[j] = 1
+	    found = 1
+	}
+    }
+
+    num_ibullets_inFlight++
+    firecount = 0
+}
+
+function move_ibullets() {
+    if(gameover == 1) { return }
+
+    for(var i in ibullets) {
+        if(ibullets_used[i] == 1) {
+            ibullets[i].style.pixelTop += ibullets_move_chunk
+	    
+      	    if(ibullets[i].style.pixelTop > ibullets_move_max) {
+	        ibullets[i].style.pixelTop = -1000
+		ibullets_used[i] = 0
+		num_ibullets_inFlight--
+		firecount = 0
+            }
+
+	    if(ibullets[i].style.pixelTop > ibullets_kill_below) {
+	        if((ibullets[i].style.pixelLeft > gunner.style.pixelLeft)&&
+		   (ibullets[i].style.pixelLeft < (gunner.style.pixelLeft + gunner_size))) {
+		   gunner.src = gunnerDead_src	
+		   window.setTimeout("gunner_die()", gunner_die_timeout)
+
+		   ibullets[i].style.pixelTop = -1000
+		   ibullets_used[i] = 0
+		   num_ibullets_inFlight--
+		   firecount = 0
+                }
+            }
+	}
+    }
+
+    window.setTimeout("move_ibullets()", ibullets_move_timeout)
+}
+
+function moveleft() {
+    if(gameover == 1) { return }
+
+    if (gunner.style.pixelLeft > gunner_move_min) {
+        gunner.style.pixelLeft -= gunner_move_chunk
+    }
+}
+
+function moveright() {
+    if(gameover == 1) { return }
+
+    if (gunner.style.pixelLeft < gunner_move_max) {
+        gunner.style.pixelLeft += gunner_move_chunk
+    }
+}
+
+function fire() {
+    if(gameover == 1) { return }
+
+    if(bullet_inFlight == 0) {
+        bullet.style.pixelLeft = gunner.style.pixelLeft + bullet_start_plusLeft
+        bullet.style.pixelTop = gunner.style.pixelTop + bullet_start_plusTop
+
+        window.setTimeout("bullet_move()", bullet_move_timeout)
+        bullet_inFlight = 1
+    }
+}
+
+function bullet_move() {
+    bullet.style.pixelTop -= bullet_move_chunk
+
+    if(gameover == 1) { return }
+
+    if(bullet.style.pixelTop < saucer_kill_zone) {
+        if((bullet.style.pixelLeft > saucer.style.pixelLeft) &&
+	   (bullet.style.pixelLeft < (saucer.style.pixelLeft + saucer_size))) {
+	    saucer.src = saucerdying_src
+	    window.setTimeout("saucerdie()", 1000)
+            saucerdying = 1
+	    score += saucerscore
+	    frm.score.value = score
+	}
+    }
+
+    for (var i in invaders) {
+        if(invadertype[i] != 0) {
+	    if((bullet.style.pixelLeft >= invaders[i].style.pixelLeft)&&
+	       (bullet.style.pixelLeft < invaders[i].style.pixelLeft + invader_sizeLeft)&&
+	       (bullet.style.pixelTop >= invaders[i].style.pixelTop)&&
+	       (bullet.style.pixelTop < invaders[i].style.pixelTop + invader_sizeTop)) {
+	        invadertype[i] = 0
+		invaders[i].src = invadergraphic[0][0]
+		window.setTimeout("invader_die(" + i + ")", invader_die_timeout)
+		score += invaderscore
+	        frm.score.value = score
+		bullet_inFlight = 0
+		bullet.style.pixelTop = -100
+		invader_move_timeout -= invader_move_timeout_chunk
+		if(invader_moveLeft_chunk < 0) {
+		    invader_moveLeft_chunk -= invader_move_speedup_chunk
+		    invader_moveTop_chunk -= invader_move_speedup_chunk
+		} else {
+		    invader_moveLeft_chunk += invader_move_speedup_chunk
+		    invader_moveTop_chunk += invader_move_speedup_chunk
+		}
+	    }
+	}
+    }
+
+    if(bullet.style.pixelTop < bullet_move_min) {
+        bullet_inFlight = 0
+	bullet.style.pixelTop = -100
+    } else {
+        window.setTimeout("bullet_move()", bullet_move_timeout)
+    }
+}
+
+function invader_die(i) {
+    invaders[i].style.pixelTop = -100
+}
+
+function do_change(key) {
+    if (key == ",") {
+        moveleft()
+    } else {
+        if (key == ".") {
+	    moveright()
+	} else {
+	    fire()
+	}
+    }
+}
+
+function movesaucer() {
+    saucerevent = 0;
+    if((gameover == 1)||(saucerdying == 1)) { return }
+
+    if(saucer.style.pixelLeft > saucer_move_max) {
+        if(saucerevent == 0) {
+            saucerevent = 1;
+            window.setTimeout("movesaucer()", saucer_appear_timeout)
+        }
+        saucer.style.pixelLeft = -100
+    } else {
+        if(saucerevent == 0) {
+            saucerevent = 1;
+            window.setTimeout("movesaucer()", saucer_move_timeout)
+        }
+	saucer.style.pixelLeft += saucer_move_chunk
+    }
+}
+
+function saucerdie() {
+    saucer.style.pixelLeft = -100
+    saucer.src = saucer_src
+    if(saucerevent == 0) {
+        saucerevent = 1;
+	window.setTimeout("movesaucer()", saucer_appear_timeout)
+    }
+    saucerdying = 0
+}
+
+function gunner_die() {
+    lives_images[lives].style.pixelTop = -200
+    lives--
+    if(lives == 0) {
+        gunner.style.pixelTop = -1000
+        gameend(0)
+    }
+
+    gunner.src = gunnerLive_src
+}
+</SCRIPT>
+
+<SCRIPT LANGUAGE="JavaScript">
+
+function document_onkeypress(){
+    if (Chr(window.event.keyCode) = ",") {
+        moveleft()
+    }
+    if (Chr(window.event.keyCode) = ".") {
+        moveright()
+    }
+    if (Chr(window.event.keyCode) = " ") {
+        fire()
+    }
+}
+
+function newgame_onmousedown() {
+    newgame.src="new_game_pressed.gif"
+}
+
+function newgame_onmouseup() {
+    newgame.src="new_game.gif"
+    setup_new_game()
+}
+
+function newgame_onmouseout() {
+    newgame.src="new_game.gif"
+}
+
+</SCRIPT>
+
+</HEAD>
+<body background="bg.gif" bgcolor="#000000" text="#CCCCCC" topmargin="0" leftmargin="0">
+
+<IMG SRC="invader1a.gif" ID="invader1" STYLE="position:absolute; z-index:3; visibility:visible;">
+<IMG SRC="invader1a.gif" ID="invader2" STYLE="position:absolute; z-index:3; visibility:visible;">
+<IMG SRC="invader1a.gif" ID="invader3" STYLE="position:absolute; z-index:3; visibility:visible;">
+<IMG SRC="invader1a.gif" ID="invader4" STYLE="position:absolute; z-index:3; visibility:visible;">
+<IMG SRC="invader1a.gif" ID="invader5" STYLE="position:absolute; z-index:3; visibility:visible;">
+<IMG SRC="invader1a.gif" ID="invader6" STYLE="position:absolute; z-index:3; visibility:visible;">
+<IMG SRC="invader2a.gif" ID="invader7" STYLE="position:absolute; z-index:3; visibility:visible;">
+<IMG SRC="invader2a.gif" ID="invader8" STYLE="position:absolute; z-index:3; visibility:visible;">
+<IMG SRC="invader2a.gif" ID="invader9" STYLE="position:absolute; z-index:3; visibility:visible;">
+<IMG SRC="invader2a.gif" ID="invader10" STYLE="position:absolute; z-index:3; visibility:visible;">
+<IMG SRC="invader2a.gif" ID="invader11" STYLE="position:absolute; z-index:3; visibility:visible;">
+<IMG SRC="invader2a.gif" ID="invader12" STYLE="position:absolute; z-index:3; visibility:visible;">
+<IMG SRC="invader2a.gif" ID="invader13" STYLE="position:absolute; z-index:3; visibility:visible;">
+<IMG SRC="invader2a.gif" ID="invader14" STYLE="position:absolute; z-index:3; visibility:visible;">
+<IMG SRC="invader2a.gif" ID="invader15" STYLE="position:absolute; z-index:3; visibility:visible;">
+<IMG SRC="invader2a.gif" ID="invader16" STYLE="position:absolute; z-index:3; visibility:visible;">
+<IMG SRC="invader2a.gif" ID="invader17" STYLE="position:absolute; z-index:3; visibility:visible;">
+<IMG SRC="invader2a.gif" ID="invader18" STYLE="position:absolute; z-index:3; visibility:visible;">
+
+<IMG SRC="ibullet.gif" ID="ibullets1" STYLE="position:absolute; z-index:2; visibility:visible;">
+<IMG SRC="ibullet.gif" ID="ibullets2" STYLE="position:absolute; z-index:2; visibility:visible;">
+<IMG SRC="ibullet.gif" ID="ibullets3" STYLE="position:absolute; z-index:2; visibility:visible;">
+<IMG SRC="ibullet.gif" ID="ibullets4" STYLE="position:absolute; z-index:2; visibility:visible;">
+<IMG SRC="ibullet.gif" ID="ibullets5" STYLE="position:absolute; z-index:2; visibility:visible;">
+
+<IMG SRC="lives.gif" ID="livesimage1" STYLE="position:absolute; z-index:2; visibility:visible;">
+<IMG SRC="lives.gif" ID="livesimage2" STYLE="position:absolute; z-index:2; visibility:visible;">
+<IMG SRC="lives.gif" ID="livesimage3" STYLE="position:absolute; z-index:2; visibility:visible;">
+<IMG SRC="lives_text.gif" ID="lives_text" STYLE="position:absolute; z-index:2; visibility:visible;">
+
+<IMG SRC="saucer.gif" ID="saucer" STYLE="position:absolute; z-index:3; visibility:visible;">
+<IMG SRC="gunner.gif" ID="gunner" STYLE="position:absolute; z-index:3; visibility:visible;">
+<IMG SRC="bullet.gif" ID="bullet" STYLE="position:absolute; z-index:2; visibility:visible;">
+<IMG SRC="winner.gif" ID="winner" STYLE="position:absolute; z-index:4; visibility:visible;">
+<IMG SRC="loser.gif" ID="loser" STYLE="position:absolute; z-index:4; visibility:visible;">
+<IMG SRC="new_game.gif" ID="newgame" STYLE="position:absolute; z-index:4; visibility:visible;">
+
+<DIV ID="in">
+ <table cellpadding=0 cellspacing=0 width=490 height=369>
+  <TR>
+   <TD VALIGN=BOTTOM>
+    <DIV ALIGN=RIGHT>
+     <FORM ID="frm">
+     <img src="waves.gif" align="middle" width=40 height=9 border=0>&nbsp;<INPUT ID="waves" SIZE=3>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+     <img src="score.gif" align="middle" width=37 height=9 border=0>&nbsp;<INPUT ID=score SIZE=10>
+     </FORM>
+    </DIV>
+   </TD>
+  </TR>
+ </TABLE>
+</DIV>
+<SCRIPT LANGUAGE="JavaScript">
+newgame.src = "new_game_pressed.gif"
+newgame.src = "new_game.gif"
+
+invaders = new Array
+invadertype = new Array
+invadergraphic = new Array
+
+invadergraphic = new Object
+invadergraphic[0] = new Object
+invadergraphic[0][0] = "invader1c.gif"
+
+invadergraphic[1] = new Object
+invadergraphic[1][0] = "invader1b.gif"
+invadergraphic[1][1] = "invader1a.gif"
+
+invadergraphic[2] = new Object
+invadergraphic[2][0] = "invader2b.gif"
+invadergraphic[2][1] = "invader2a.gif"
+
+invaders[1] = invader1
+invaders[2] = invader2
+invaders[3] = invader3
+invaders[4] = invader4
+invaders[5] = invader5
+invaders[6] = invader6
+invaders[7] = invader7
+invaders[8] = invader8
+invaders[9] = invader9
+invaders[10] = invader10
+invaders[11] = invader11
+invaders[12] = invader12
+invaders[13] = invader13
+invaders[14] = invader14
+invaders[15] = invader15
+invaders[16] = invader16
+invaders[17] = invader17
+invaders[18] = invader18
+
+function invaders_setup() {
+    invadertype[1] = 1
+    invadertype[2] = 1
+    invadertype[3] = 1
+    invadertype[4] = 1
+    invadertype[5] = 1
+    invadertype[6] = 1
+    invadertype[7] = 1
+    invadertype[8] = 1
+    invadertype[9] = 1
+    invadertype[10] = 1
+    invadertype[11] = 1
+    invadertype[12] = 1
+    invadertype[13] = 2
+    invadertype[14] = 2
+    invadertype[15] = 2
+    invadertype[16] = 2
+    invadertype[17] = 2
+    invadertype[18] = 2
+}
+
+gunnerDead_src = "gunnerdead.gif"
+gunnerLive_src = "gunner.gif"
+saucer_src = "saucer.gif"
+saucerdying_src = "saucerdying.gif"
+
+ibullets = new Array
+ibullets_used = new Array
+num_ibullets = 5
+num_ibullets_inFlight = 0
+
+ibullets[1] = ibullets1
+ibullets[2] = ibullets2
+ibullets[3] = ibullets3
+ibullets[4] = ibullets4
+ibullets[5] = ibullets5
+ibullets_used[1] = 0
+ibullets_used[2] = 0
+ibullets_used[3] = 0
+ibullets_used[4] = 0
+ibullets_used[5] = 0
+
+lives_images = new Array
+lives_images[1] = livesimage1
+lives_images[2] = livesimage2
+lives_images[3] = livesimage3
+
+invis_new_game_but()
+setup_new_game()
+</SCRIPT>
+<center><a href="../games.htm" target="_parent"><img src="home.gif" width=55 height=25 border=0></a></center>
+
+</BODY>
+</HTML>
